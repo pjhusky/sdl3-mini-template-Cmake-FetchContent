@@ -1,0 +1,12 @@
+@ECHO OFF
+
+IF NOT "%1"=="" (
+    SET OPTION_BACKEND=%1
+)
+
+ECHO Available graphics backends: OPENGL3, SDL_RENDERER, SDL_GPU, SDL_VULKAN
+ECHO Using backend: %OPTION_BACKEND%
+
+cmake -S . -B .\build -DCMAKE_BUILD_TYPE=Release -DIMGUI_GFX_BACKEND="%OPTION_BACKEND%"
+
+@ECHO ON
