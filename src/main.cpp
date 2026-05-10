@@ -1,5 +1,7 @@
 #include "config.h"
 
+
+
 #if ( IMGUI_GFX_BACKEND == BACKEND_OPENGL3 )
     #include "main_ogl3.cpp"
 #elif ( IMGUI_GFX_BACKEND == BACKEND_SDL_GPU )
@@ -9,5 +11,8 @@
 #elif ( IMGUI_GFX_BACKEND == BACKEND_SDL_VULKAN )
     #include "main_sdlvulkan.cpp"
 #else
-    #error "Unsupported ImGui graphics backend"
+    // #error "Unsupported ImGui graphics backend: "
+    #undef IMGUI_GFX_BACKEND
+    #define IMGUI_GFX_BACKEND BACKEND_SDL_GPU
+    #include "main_sdlgpu.cpp"
 #endif
