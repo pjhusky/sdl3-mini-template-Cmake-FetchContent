@@ -16,7 +16,9 @@ IF NOT "%1"=="" (
 @REM -DLUA_MODE=Luajit_OriginalExternalAdd [Default]
 @REM -DLUA_MODE=Luajit_WohlsoftCmakeWrapper
 @REM -DLUA_MODE=VanillaLua
-@SET "LUA_MODE=-DLUA_MODE=Luajit_OriginalExternalAdd"
+@REM @SET "LUA_MODE=-DLUA_MODE=Luajit_OriginalExternalAdd"
+@REM @SET "LUA_MODE=-DLUA_MODE=Luajit_WohlsoftCmakeWrapper"
+@SET "LUA_MODE=-DLUA_MODE=VanillaLua"
 @REM @call create.bat %OPTION_BACKEND% "-DLUA_MODE=Luajit_WohlsoftCmakeWrapper"
 @call create.bat %OPTION_BACKEND% "%LUA_MODE%"
 @call build.bat 
