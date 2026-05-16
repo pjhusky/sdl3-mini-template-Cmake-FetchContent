@@ -40,8 +40,27 @@ target_include_directories(imgui
 # )
 
 # Define the variable with a default value
-set(IMGUI_GFX_BACKEND "OPENGL3" CACHE STRING "Graphics backend for ImGui")
-set_property(CACHE IMGUI_GFX_BACKEND PROPERTY STRINGS "OPENGL3" "SDL_RENDERER" "SDL_GPU" "SDL_VULKAN" )
+# This line handles the variable setup and fallback value for your script logic.
+#   What it does: It creates a variable named IMGUI_GFX_BACKEND in the cache.
+#   The "OPENGL3" part: This specifies the default value used if the user completely forgets to pass a backend via the command line (e.g., if they just run cmake ..).
+#   Why it's needed: Without this line, your CMake script would have no default value to work with, causing your if/else build logic to break.
+#==> set(IMGUI_GFX_BACKEND "OPENGL3" CACHE STRING "Graphics backend for ImGui")
+#
+# This line handles the user interface constraints for tools like cmake-gui or ccmake.
+#   What it does: It attaches metadata to the variable, telling CMake: "This variable behaves like an enum."
+#   The list of backends: This populates the interactive drop-down menu in graphical CMake tools so users don't have to type out the backend names manually (and risk typos).
+#   Why it's needed: Without this line, a user opening your project in cmake-gui would just see an empty text box where they could type anything, rather than a clean select menu.
+#==> set_property(CACHE IMGUI_GFX_BACKEND PROPERTY STRINGS "OPENGL3" "SDL_RENDERER" "SDL_GPU" "SDL_VULKAN" )
+
+# better:
+# 1. Define the options list once
+set(IMGUI_BACKEND_CHOICES "OPENGL3" "SDL_RENDERER" "SDL_GPU" "SDL_VULKAN")
+# 2. Grab the first element to use as the default value ("OPENGL3")
+list(GET IMGUI_BACKEND_CHOICES 0 IMGUI_DEFAULT_BACKEND)
+# 3. Create the variable using the dynamic default
+set(IMGUI_GFX_BACKEND "${IMGUI_DEFAULT_BACKEND}" CACHE STRING "Graphics backend for ImGui")
+# 4. Attach the choices to the drop-down menu
+set_property(CACHE IMGUI_GFX_BACKEND PROPERTY STRINGS ${IMGUI_BACKEND_CHOICES})
 
 # Base source files
 set(IMGUI_SOURCES
