@@ -107,6 +107,7 @@ target_link_libraries(${MY_EXE_TARGET}
     luajit_lib::luajit_lib
     sol3::sol3
     box2d::box2d
+    chipmunk::chipmunk
 )
 
 # Set .html suffix for web builds
