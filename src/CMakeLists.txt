@@ -106,6 +106,7 @@ target_link_libraries(${MY_EXE_TARGET}
     SDL3::SDL3
     luajit_lib::luajit_lib
     sol3::sol3
+    box2d::box2d
 )
 
 # Set .html suffix for web builds
