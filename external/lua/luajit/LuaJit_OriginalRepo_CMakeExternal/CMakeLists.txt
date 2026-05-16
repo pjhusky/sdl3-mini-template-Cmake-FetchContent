@@ -170,4 +170,4 @@ else()
   # No DLL copy needed on Unix — static lib is linked at build time.
 endif()
 
-add_library(luajit_lib::luajit_lib ALIAS luajit_lib)
+add_library(lua_lib::lua_lib ALIAS luajit_lib)

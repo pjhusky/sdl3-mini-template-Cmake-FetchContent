@@ -30,7 +30,7 @@ target_compile_features(${MY_EXE_TARGET} PUBLIC cxx_std_17)
 # endif()
 
 # 4. Ensure the external project builds BEFORE your executable
-add_dependencies(${MY_EXE_TARGET} luajit_lib::luajit_lib)
+add_dependencies(${MY_EXE_TARGET} lua_lib::lua_lib)
 
 ### !!! CMAKE_LIBRARY_OUTPUT_DIRECTORY didn't help with copying SDL3.dll to the output directory, so we need to do it manually on Windows after build. !!! ###
 if(WIN32)
@@ -52,7 +52,7 @@ endif()
 # In your case:
 
 # SDL3::SDL3 is a normal imported/shared library target, so CMake can detect its runtime DLL and include it in TARGET_RUNTIME_DLLS.
-# luajit_lib::luajit_lib is coming from your ExternalProject/Imported target setup, and CMake does not expose lua51.dll as a runtime DLL dependency for ${MY_EXE_TARGET} in that configuration.
+# lua_lib::lua_lib is coming from your ExternalProject/Imported target setup, and CMake does not expose lua51.dll as a runtime DLL dependency for ${MY_EXE_TARGET} in that configuration.
 
 # in SHORT:
 # TARGET_RUNTIME_DLLS did not pick up lua51.dll because LuaJIT is not being exposed to CMake as a runtime dependency in the same way as SDL3. It is an imported external DLL that CMake cannot automatically collect for that generator expression in your setup.
@@ -104,7 +104,7 @@ target_link_libraries(${MY_EXE_TARGET}
     imgui::imgui
     fmt::fmt
     SDL3::SDL3
-    luajit_lib::luajit_lib
+    lua_lib::lua_lib
     sol3::sol3
     box2d::box2d
     chipmunk::chipmunk

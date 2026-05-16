@@ -14,4 +14,4 @@ FetchContent_MakeAvailable( libluajit )
 # add_library(luajit_lib IMPORTED)
 
 # add_library(luajit_lib)
-add_library( luajit_lib::luajit_lib ALIAS libluajit )
+add_library( lua_lib::lua_lib ALIAS libluajit )
