@@ -2,7 +2,6 @@
 
 Minimal starter project with SDL3, fmt and imgui, using clean CMake scripts (no CPM or bootstrapping needed, just pure built-in FetchContent).
 
-
 # Building
 
 ## References
