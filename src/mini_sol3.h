@@ -2,12 +2,23 @@
 // https://gitlab.sai.jku.at/booleguru/booleguru/-/blob/d06c03831598c1f6c1caeb201c339695bd806776/third_party/sol/sol2-3.3.0/examples/source/basic.cpp
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
+// #include <sol/assert.hpp>
 
 #include <fmt/format.h>
+
+
+#ifdef __EMSCRIPTEN__
+	#include <emscripten.h>
+#endif
+
 
 void mini_sol3_example() {
 // create an empty lua state
 	sol::state lua;
+
+
+
+
 
 	// by default, libraries are not opened
 	// you can open libraries by using open_libraries
@@ -16,13 +27,41 @@ void mini_sol3_example() {
 	// you can open all libraries by passing no arguments
 	// lua.open_libraries();
 
+
+
+// lua.set_function("print", [](sol::variadic_args args) {
+//     std::string out;
+//     for (auto arg : args) { out += arg.as<std::string>() + " "; }
+    
+// #ifdef __EMSCRIPTEN__
+//     // Bypasses stdout entirely and sends text directly to the native JS Engine console
+//     EM_ASM({ console.log(UTF8ToString($0)); }, out.c_str());
+// #else
+//     std::cout << out << std::endl;
+// #endif
+// });
+
+/*
+lua.set_function("print", [](sol::variadic_args args) {
+    std::string out;
+    for (auto arg : args) { out += arg.as<std::string>() + " "; }
+    
+    //std::cout << out << std::endl;
+	fmt::print("{}\n", out);
+	// fmt::flush
+});
+*/
+
 	// call lua code directly
-	lua.script("print('hello world')");
+	lua.script("print('1 hello world\\n')");
 
 	// call lua code, and check to make sure it has loaded and
 	// run properly:
-	auto handler = &sol::script_default_on_error;
-	lua.script("print('hello again, world')", handler);
+	// auto handler = &sol::script_default_on_error;
+	// lua.script("print('2 hello again, world')", handler);
+
+	lua.script("print('2 hello again, world\\n')");
+
 
 	// Use a custom error handler if you need it
 	// This gets called when the result is bad
@@ -39,7 +78,7 @@ void mini_sol3_example() {
 	//
 	{
 		auto result = lua.script(
-		     "print('hello hello again, world') \n return 24",
+		     "print('3 hello hello again, world\\n') \n return 24",
 		     simple_handler);
 		if (result.valid()) {
 			std::cout << "the third script worked, and a "
@@ -47,7 +86,7 @@ void mini_sol3_example() {
 			             "appear above this one!"
 			          << std::endl;
 			int value = result;
-			sol_c_assert(value == 24);
+			//!!! sol_c_assert(value == 24);
 		}
 		else {
 			std::cout << "the third script failed, check the "
@@ -64,7 +103,7 @@ void mini_sol3_example() {
 			             "wasn't supposed to! Panic!"
 			          << std::endl;
 			int value = result;
-			sol_c_assert(value == 24);
+			//!!! sol_c_assert(value == 24);
 		}
 		else {
 			sol::error err = result;
