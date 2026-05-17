@@ -28,6 +28,7 @@
 
 #include <fmt/format.h>
 
+#include "mini_sol3.h"
 
 
 // Volk headers
@@ -350,6 +351,8 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd)
 int main(int, char**)
 {
     fmt::print("Starting Dear ImGui + Vulkan Renderer example...\n");
+
+    mini_sol3_example();
 
     // Setup SDL
     // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]

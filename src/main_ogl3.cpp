@@ -26,10 +26,14 @@
 #include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
 
+#include "mini_sol3.h"
+
 // Main code
 int main(int, char**)
 {
     fmt::print("Starting Dear ImGui + OpenGL3 example...\n");
+
+    mini_sol3_example();
 
     // Setup SDL
     // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]

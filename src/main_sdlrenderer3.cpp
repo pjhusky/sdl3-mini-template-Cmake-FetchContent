@@ -22,10 +22,14 @@
 
 #include <fmt/format.h>
 
+#include "mini_sol3.h"
+
 int main(int, char**) {
 
     fmt::print("Starting Dear ImGui + SDL3 Renderer example...\n");
 
+    mini_sol3_example();
+    
     // Setup SDL
     // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
