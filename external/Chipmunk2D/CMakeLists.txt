@@ -2,7 +2,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   chipmunk
-  GIT_REPOSITORY https://github.com/slembcke/Chipmunk2D.git
+  # GIT_REPOSITORY https://github.com/slembcke/Chipmunk2D.git
+  GIT_REPOSITORY https://codeberg.org/slembcke/Chipmunk2D.git
   GIT_TAG        master
   GIT_SHALLOW    TRUE
   GIT_PROGRESS   TRUE
@@ -11,7 +12,33 @@ FetchContent_Declare(
 # Inject the policy patch into the chipmunk project scope
 set(CMAKE_PROJECT_chipmunk_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/chipmunk2d_patch.cmake")
 
-FetchContent_MakeAvailable(chipmunk)
+block()
+    # 1. Force shared library (only for this block) but not for emscripten
+    if(EMSCRIPTEN)
+        set(BUILD_SHARED OFF)
+
+        # Forces the compiler to respect standard IEEE-754 Infinity rules
+        add_compile_options(-fno-finite-math-only)
+    endif()
+
+    set(BUILD_DEMOS OFF)
+
+
+
+    FetchContent_MakeAvailable(chipmunk)
+endblock()
+
+# TODO - probably better!!!
+# # Inject the Emscripten fixes directly into Chipmunk's target
+# if(EMSCRIPTEN)
+#   # Prevent undefined behavior bugs by keeping infinity intact
+#   target_compile_options(chipmunk PRIVATE -fno-finite-math-only)
+  
+#   # Or simply quiet the warning if it still logs messages
+#   target_compile_options(chipmunk PRIVATE -Wno-nan-infinity-disabled)
+# endif()
+
+
 
 # add_library( chipmunk::chipmunk ALIAS chipmunk )
 # Check if the target is just named 'chipmunk'
