@@ -14,11 +14,23 @@
 
 @ECHO.
 @ECHO Building (Main App)... 
+@SET "LUA_MODE=-DLUA_MODE=VanillaLua"
+@REM @SET "IMGUI_GFX_BACKEND=-DIMGUI_GFX_BACKEND=OPENGL3"
+@REM @SET "IMGUI_GFX_BACKEND=-DIMGUI_GFX_BACKEND=SDL_RENDERER"
+@REM @SET "IMGUI_GFX_BACKEND=-DIMGUI_GFX_BACKEND=SDL_GPU"
+@SET "IMGUI_GFX_BACKEND=-DIMGUI_GFX_BACKEND=SDL_VULKAN"
+
 @REM cmd /C starts terminal and runs the command, then closes the terminal when done. This was necessary as otherwise the following commands would not be run...
 cmd /C emcmake cmake -G Ninja ^
   -DCMAKE_MAKE_PROGRAM=%CD%/web-tools/ninja-bootstrap/install/bin/ninja ^
-  -S . -B .\build_web -DCMAKE_BUILD_TYPE=Release -DIMGUI_GFX_BACKEND=SDL_RENDERER
+  -S . -B .\build_web -DCMAKE_BUILD_TYPE=Release ^
+  %LUA_MODE% ^
+  %IMGUI_GFX_BACKEND%
+  @REM -DIMGUI_GFX_BACKEND=SDL_RENDERER 
   @REM -DIMGUI_GFX_BACKEND=SDL_GPU
+  @REM 
+  @REM 
+  
 @REM emcmake cmake -G Ninja -B build_web -DCMAKE_MAKE_PROGRAM=/path/to/your/built/ninja
 
 @REM "normal" cmake command is fine!

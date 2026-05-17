@@ -62,6 +62,29 @@ set(IMGUI_GFX_BACKEND "${IMGUI_DEFAULT_BACKEND}" CACHE STRING "Graphics backend 
 # 4. Attach the choices to the drop-down menu
 set_property(CACHE IMGUI_GFX_BACKEND PROPERTY STRINGS ${IMGUI_BACKEND_CHOICES})
 
+# Emscripten has no Vulkan and atm it seems it doesn't support SDL_GPU yet (SDL_GPU should map to WebGPU/WebGL once it's working...)
+if(EMSCRIPTEN AND (IMGUI_GFX_BACKEND STREQUAL "SDL_VULKAN" OR IMGUI_GFX_BACKEND STREQUAL "SDL_GPU"))
+    message(WARNING "Emscripten build: overriding ${IMGUI_GFX_BACKEND} -> OPENGL3")
+    # FORCE updates the global cache so configure_file() in src/ sees OPENGL3 too.
+    set(IMGUI_GFX_BACKEND "OPENGL3" CACHE STRING "Graphics backend for ImGui" FORCE)
+    # Belt-and-suspenders: define the numeric value directly on imgui's consumers
+    # so main.cpp sees the right IMGUI_GFX_BACKEND even if configure_file already
+    # emitted config.h with the old cached value. The #ifndef in config.h.in
+    # prevents a double-define. 1 == BACKEND_OPENGL3 per config.h.in.
+    target_compile_definitions(imgui INTERFACE IMGUI_GFX_BACKEND=1)
+
+    # How it works end-to-end:
+    #
+    # CACHE ... FORCE — external/imgui/ is processed before src/ in the build order, so this updates the global cache before configure_file() runs. config.h gets BACKEND_OPENGL3 from @IMGUI_GFX_BACKEND@. This is the primary fix.
+    #
+    # INTERFACE IMGUI_GFX_BACKEND=1 — propagates to main.cpp via target_link_libraries. If the cache update somehow ran after configure_file, the -D flag wins because compiler defines are processed before #include, and the #ifndef in config.h.in prevents the redefinition. This is the fallback.
+    #
+    # #ifndef IMGUI_GFX_BACKEND in config.h.in — lets the -D flag silently take precedence without a compiler warning about macro redefinition.
+    #
+    # INTERFACE (not PUBLIC) is used because only consumers of imgui (like main.cpp) need the override — the imgui library's own .cpp files don't reference IMGUI_GFX_BACKEND.
+
+endif()
+
 # Base source files
 set(IMGUI_SOURCES
     ${imgui_SOURCE_DIR}/imgui.cpp

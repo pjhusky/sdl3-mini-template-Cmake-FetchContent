@@ -112,13 +112,28 @@ target_link_libraries(${MY_EXE_TARGET}
 
 # Set .html suffix for web builds
 if(EMSCRIPTEN)
-  # This forces the final file to be index.html, index.js, and index.wasm
-  set_target_properties(${MY_EXE_TARGET} PROPERTIES OUTPUT_NAME "index" SUFFIX ".html")
+    # This forces the final file to be index.html, index.js, and index.wasm
+    set_target_properties(${MY_EXE_TARGET} PROPERTIES OUTPUT_NAME "index" SUFFIX ".html")
 
-  # Optional: ensure it uses an HTML shell if you have one
-  target_link_options(${MY_EXE_TARGET} PRIVATE "--shell-file" "${CMAKE_SOURCE_DIR}/libs/emscripten/shell_minimal.html")
-  # else()
-  #     copy_dlls(${APP})
+    # 1. Add compiler options if needed (optional)
+    target_compile_options(${MY_EXE_TARGET} PRIVATE
+        -sUSE_SDL=3
+        --use-port=emdawnwebgpu
+    )
+
+    target_link_options(${MY_EXE_TARGET} PRIVATE
+        -sUSE_SDL=3
+        --use-port=emdawnwebgpu
+        # Optional: Tells Emscripten to generate an index.html wrapper instead of raw JS
+        # --shell-file "${CMAKE_SOURCE_DIR}/libs/emscripten/shell_minimal.html"
+    )
+
+    # Optional: ensure it uses an HTML shell if you have one
+    if(USE_EMSCRIPTEN_SHELL)
+        target_link_options(${MY_EXE_TARGET} PRIVATE "--shell-file" "${CMAKE_SOURCE_DIR}/libs/emscripten/shell_minimal.html")
+    endif()
+    # else()
+    #     copy_dlls(${APP})
 endif()
 
 
