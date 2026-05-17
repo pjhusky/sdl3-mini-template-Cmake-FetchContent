@@ -13,7 +13,11 @@ FetchContent_MakeAvailable(lua)
 
 # add_library(lua STATIC)
 # add_library(lua SHARED IMPORTED GLOBAL)
-add_library(lua SHARED)
+if (EMSCRIPTEN)
+    add_library(lua STATIC)
+else()
+    add_library(lua SHARED)
+endif()
 
 
 # 3. Configure the include directories with proper scopes (for us, both should be the same i guess...)
@@ -104,16 +108,24 @@ elseif( FALSE )
     )
 else()
     # block()
+
+        # target_compile_definitions(lua
+        #     #PRIVATE MAKE_LIB=1 LUA_CORE
+        #     PRIVATE MAKE_LIB=1 
+        #     PUBLIC  LUA_BUILD_AS_DLL
+        # )
+
         # Apply the definition ONLY to this specific target
         # LUA_CORE + LUA_BUILD_AS_DLL: on Windows, MSVC only generates the import
         # lib (lua.lib) when the DLL exports symbols. LUA_BUILD_AS_DLL enables
         # __declspec(dllexport/dllimport) in luaconf.h; LUA_CORE makes this DLL
         # use dllexport (consumers that link against it get dllimport via PUBLIC).
-        target_compile_definitions(lua
-            #PRIVATE MAKE_LIB=1 LUA_CORE
-            PRIVATE MAKE_LIB=1 
-            PUBLIC  LUA_BUILD_AS_DLL
-        )
+        target_compile_definitions(lua PRIVATE MAKE_LIB=1)
+        # LUA_BUILD_AS_DLL uses __declspec which is MSVC/Windows-only.
+        # Emscripten and other non-Windows targets must not see it.
+        if(WIN32)
+            target_compile_definitions(lua PUBLIC LUA_BUILD_AS_DLL)
+        endif()
         target_sources(
             lua
             PRIVATE
