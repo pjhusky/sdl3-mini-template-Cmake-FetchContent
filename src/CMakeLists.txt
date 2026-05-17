@@ -132,6 +132,16 @@ if(EMSCRIPTEN)
     if(USE_EMSCRIPTEN_SHELL)
         target_link_options(${MY_EXE_TARGET} PRIVATE "--shell-file" "${CMAKE_SOURCE_DIR}/libs/emscripten/shell_minimal.html")
     endif()
+
+    # $<TARGET_FILE_DIR:${MY_EXE_TARGET}> resolves to the directory where the final binary lands — which is build_web/bin because of the CMAKE_RUNTIME_OUTPUT_DIRECTORY set at the top of src/CMakeLists.txt. All 7 favicon files (favicon.ico, the PNGs, site.webmanifest) will be copied there when a change is detected for each build of the Emscripten target.
+    # copy_directory_if_different does a per-file timestamp+size check and skips any file that's already identical in the destination — same semantics as copy_if_different but for a whole directory at once.
+    add_custom_command(TARGET ${MY_EXE_TARGET} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            "${CMAKE_SOURCE_DIR}/web-tools/favicon/ico"
+            "$<TARGET_FILE_DIR:${MY_EXE_TARGET}>"
+        COMMENT "Copying favicon assets to web output directory"
+        VERBATIM
+    )
     # else()
     #     copy_dlls(${APP})
 endif()

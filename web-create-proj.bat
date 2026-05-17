@@ -20,12 +20,18 @@
 @REM @SET "IMGUI_GFX_BACKEND=-DIMGUI_GFX_BACKEND=SDL_GPU"
 @SET "IMGUI_GFX_BACKEND=-DIMGUI_GFX_BACKEND=SDL_VULKAN"
 
+@REM Set to ON to use the custom shell file (libs/emscripten/shell_minimal.html).
+@REM Set to OFF (or omit) for the standard Emscripten-generated index.html.
+@SET "EMSCRIPTEN_SHELL=-DUSE_EMSCRIPTEN_SHELL=OFF"
+@REM @SET "EMSCRIPTEN_SHELL=-DUSE_EMSCRIPTEN_SHELL=ON"
+
 @REM cmd /C starts terminal and runs the command, then closes the terminal when done. This was necessary as otherwise the following commands would not be run...
 cmd /C emcmake cmake -G Ninja ^
   -DCMAKE_MAKE_PROGRAM=%CD%/web-tools/ninja-bootstrap/install/bin/ninja ^
   -S . -B .\build_web -DCMAKE_BUILD_TYPE=Release ^
   %LUA_MODE% ^
-  %IMGUI_GFX_BACKEND%
+  %IMGUI_GFX_BACKEND% ^
+  %EMSCRIPTEN_SHELL%
   @REM -DIMGUI_GFX_BACKEND=SDL_RENDERER 
   @REM -DIMGUI_GFX_BACKEND=SDL_GPU
   @REM 
