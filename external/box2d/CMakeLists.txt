@@ -31,7 +31,9 @@ FetchContent_Declare(
 # Create a local variable scope block
 block()
   # 1. Force shared library (only for this block)
-  set(BUILD_SHARED_LIBS ON)
+  if(NOT EMSCRIPTEN)
+    set(BUILD_SHARED_LIBS ON)
+  endif()
 
   # 2. Export symbols on Windows (only for this block)
   # If you are compiling on Windows, you will likely also need to add set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) right above your FetchContent_MakeAvailable call. Box2D uses standard C compilation which doesn't explicitly export all macro symbols via __declspec(dllexport) by default, meaning Windows needs this automatic fallback instruction to properly generate the required .lib import file alongside the .dll.
