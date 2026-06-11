@@ -7,7 +7,11 @@
 @REM @ECHO ###############################
 @REM @ECHO.
 
-cmake --build .\build --config Release
+cmake --build .\build --config Release -j
+
+@REM -j 4
+@REM --parallel 4
+
 
 @REM @SET END_TIME=%TIME%
 @REM @ECHO.
