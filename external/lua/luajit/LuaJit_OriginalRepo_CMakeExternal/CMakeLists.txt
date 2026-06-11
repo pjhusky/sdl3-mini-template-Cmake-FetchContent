@@ -2,7 +2,26 @@
 # cmake_path requires 3.20+
 cmake_minimum_required(VERSION 3.20)
 
+
+if(APPLE)
+    execute_process(
+        COMMAND sw_vers -productVersion
+        OUTPUT_VARIABLE MACOS_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    # Extract major.minor if needed, or use the full version string
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "${MACOS_VERSION}" CACHE STRING "" FORCE)
+
+    message(STATUS " ### The macOS target version is: ${MACOS_VERSION} ### ")
+    
+endif()
+
+
 project(MyLuaApp LANGUAGES C CXX)
+
+# if(APPLE)
+# target_compile_definitions(MyLuaApp PRIVATE MACOSX_DEPLOYMENT_TARGET="${MACOS_VERSION}")
+# endif()
 
 include(FetchContent)
 include(ExternalProject)
@@ -145,22 +164,134 @@ if(WIN32)
     # endif()
 
 else()
-  # Unix-based build using Make
-  # The Makefile produces libluajit-5.1.a (not libluajit.a)
-  set(LUAJIT_STATIC_LIB "${LUAJIT_SRC_DIR}/src/libluajit-5.1.a")
+  # # Unix-based build using Make
+  # # The Makefile produces libluajit-5.1.a (not libluajit.a)
+  # set(LUAJIT_STATIC_LIB "${LUAJIT_SRC_DIR}/src/libluajit-5.1.a")
+
+  # Check for the actual file produced by the Makefile
+  # if(EXISTS "${LUAJIT_SRC_DIR}/src/libluajit.a")
+  #   set(LUAJIT_STATIC_LIB "${LUAJIT_SRC_DIR}/src/libluajit.a")
+  # else()
+  #   set(LUAJIT_STATIC_LIB "${LUAJIT_SRC_DIR}/src/libluajit-5.1.a")
+  # endif()
+  set(LUAJIT_STATIC_LIB "${LUAJIT_SRC_DIR}/src/libluajit.a")
+
+  message( STATUS " *#*#*# LUAJIT_STATIC_LIB = ${LUAJIT_STATIC_LIB} *#*#*# " )
 
   # CMAKE_MAKE_PROGRAM may be ninja when using the Ninja generator,
   # so find the real make explicitly
   find_program(MAKE_PROGRAM NAMES make gmake REQUIRED)
 
+  # this worked, but relies on shell scripts passing several vars
+  # ExternalProject_Add(luajit_compile
+  #       SOURCE_DIR        "${LUAJIT_SRC_DIR}"
+  #       CONFIGURE_COMMAND ""
+  #       BUILD_COMMAND     ${MAKE_PROGRAM} -C "${LUAJIT_SRC_DIR}"
+  #       INSTALL_COMMAND   ""
+  #       BUILD_BYPRODUCTS  "${LUAJIT_STATIC_LIB}"
+  # )
+
+  # Passes Apple Silicon flags directly to LuaJIT's internal Makefile
   ExternalProject_Add(luajit_compile
-        SOURCE_DIR        "${LUAJIT_SRC_DIR}"
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND     ${MAKE_PROGRAM} -C "${LUAJIT_SRC_DIR}"
-        INSTALL_COMMAND   ""
-        BUILD_BYPRODUCTS  "${LUAJIT_STATIC_LIB}"
+      SOURCE_DIR        "${LUAJIT_SRC_DIR}"
+      CONFIGURE_COMMAND ""
+      # BUILD_COMMAND     ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
+      #                   ${MAKE_PROGRAM} -C "${LUAJIT_SRC_DIR}" 
+      #                   DEFAULT_CC=clang CROSS= TARGET_FLAGS="-arch arm64"
+      # Safely separates Host CC compilation flags from Target architecture requirements
+      # BUILD_COMMAND     ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
+      #                   ${MAKE_PROGRAM} -C "${LUAJIT_SRC_DIR}" 
+      #                   HOST_CC="clang"
+      #                   TARGET_CC="clang"
+      #                   TARGET_CFLAGS="-arch arm64"
+      #                   TARGET_LDFLAGS="-arch arm64"
+
+
+      # This error occurs because CMake expands quoted variables as a single argument containing a space, causing clang to read "-arch arm64" as one option instead of two (-arch and arm64).
+      # To fix this, remove the inner quotes from the CMake arguments so that CMake passes them to the shell as distinct parameters.
+      # ==> essential to have the 
+      #     TARGET_CFLAGS="-arch arm64"
+      #   changed to
+      #     "TARGET_CFLAGS=-arch arm64"
+
+      # with the above fix:
+      BUILD_COMMAND ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
+                    ${MAKE_PROGRAM} -C ${LUAJIT_SRC_DIR} 
+                    HOST_CC=clang TARGET_CC=clang 
+                    "TARGET_CFLAGS=-arch arm64" "TARGET_LDFLAGS=-arch arm64"
+
+      # alternative: Use LuaJIT's Built-In Architecture Flags
+      # BUILD_COMMAND ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
+      #               ${MAKE_PROGRAM} -C ${LUAJIT_SRC_DIR} 
+      #               HOST_CC=clang TARGET_CC=clang 
+      #               TARGET_SYS=Darwin Am64=1
+
+      
+      INSTALL_COMMAND   ""
+      BUILD_BYPRODUCTS  "${LUAJIT_STATIC_LIB}"
     )
 
+  # 2. Dynamic Name Interception Step
+  ExternalProject_Add_Step(luajit_compile detect_and_normalize_lib
+    COMMAND           ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/detect_lib.cmake"
+    DEPENDEES         build
+    COMMENT           "Detecting output filename"
+  )
+  # 3. Generate the detection script that runs DURING the build phase
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/detect_lib.cmake" "
+    file(GLOB DETECTED_LIBS \"${LUAJIT_SRC_DIR}/src/lib*.a\")
+    
+    if(DETECTED_LIBS)
+        list(GET DETECTED_LIBS 0 ACTUAL_FILE)
+        get_filename_component(RAW_NAME \"\${ACTUAL_FILE}\" NAME)
+        
+        # THIS WILL PRINT THE NAME DIRECTLY TO YOUR TERMINAL DURING THE BUILD
+        message(NOTICE \"==================================================\")
+        message(NOTICE \"[LuaJIT Detect] The Makefile output file is: \${RAW_NAME}\")
+        message(NOTICE \"==================================================\")
+        
+        if(NOT \"\${ACTUAL_FILE}\" STREQUAL \"${LUAJIT_STATIC_LIB}\")
+            file(COPY \"\${ACTUAL_FILE}\" DESTINATION \"${LUAJIT_SRC_DIR}/src/\")
+            file(RENAME \"${LUAJIT_SRC_DIR}/src/\${RAW_NAME}\" \"${LUAJIT_STATIC_LIB}\")
+        endif()
+    else()
+        message(FATAL_ERROR \"[LuaJIT Detect] Critical: The Makefile did not output any library file!\")
+    endif()
+  ")
+
+
+  # copy_if_different: This is a built-in, cross-platform CMake tool. If libluajit.a and libluajit-5.1.a are identical (or if the Makefile somehow did create the -5.1.a file directly), it safely skips the copy operation without throwing errors.
+  # DEPENDEES build: This guarantees that the copy operation will only run after the compilation step successfully completes.
+  # Maintains compatibility: Your outer template can continue using ${LUAJIT_STATIC_LIB} exactly as it was originally written, meaning you don't have to trace down and refactor other parts of the template.
+
+  # # 3. Safe Post-Build Copy Step
+  # ExternalProject_Add_Step(luajit_compile safe_rename_copy
+  #   COMMAND           ${CMAKE_COMMAND} -E copy_if_different
+  #                     "${LUAJIT_SRC_DIR}/src/libluajit.a"
+  #                     "${LUAJIT_STATIC_LIB}"
+  #   DEPENDEES         build
+  #   COMMENT           "Safely copying libluajit.a to libluajit-5.1.a if required"
+  # )
+
+  # # 3. Blind Wildcard Copy Step (Safety-First Execution)
+  # ExternalProject_Add_Step(luajit_compile force_rename_output
+  #   COMMAND           /bin/sh -c "
+  #                     if [ ! -f '${LUAJIT_STATIC_LIB}' ]; then
+  #                         # Look for any .a file produced in the target directory
+  #                         FOUND_LIB=$(ls ${LUAJIT_SRC_DIR}/src/lib*.a 2>/dev/null | head -n 1);
+  #                         if [ -n \"$FOUND_LIB\" ]; then
+  #                             cp \"$FOUND_LIB\" \"${LUAJIT_STATIC_LIB}\";
+  #                             echo 'Forced copy:' $FOUND_LIB '->' ${LUAJIT_STATIC_LIB};
+  #                         fi
+  #                     else
+  #                         echo 'Target file already matched the template name. No action needed.';
+  #                     fi
+  #                     "
+  #   DEPENDEES         build
+  #   COMMENT           "Enforcing the given template filename from whatever the Makefile built"
+  # )
+
+  
   add_library(luajit_lib STATIC IMPORTED GLOBAL)
   add_dependencies(luajit_lib luajit_compile)
   set_target_properties(luajit_lib PROPERTIES
