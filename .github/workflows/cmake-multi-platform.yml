@@ -46,7 +46,7 @@ jobs:
 
       matrix:
         # 1. Added both macos versions to the operating system array
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         include:
@@ -63,8 +63,8 @@ jobs:
           - os: macos-latest
             c_compiler: clang
             cpp_compiler: clang++
-          # 3. Explicitly map macos-13 (Intel x86_64) to use Clang
-          - os: macos-13
+          # 3. Explicitly map macos-15 (Intel x86_64) to use Clang
+          - os: macos-15-intel
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
@@ -79,9 +79,9 @@ jobs:
             c_compiler: gcc
           - os: macos-latest
             c_compiler: cl
-          - os: macos-13
+          - os: macos-15-intel
             c_compiler: gcc
-          - os: macos-13
+          - os: macos-15-intel
             c_compiler: cl
 
     steps:
