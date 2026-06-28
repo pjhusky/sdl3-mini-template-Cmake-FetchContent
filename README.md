@@ -1,3 +1,5 @@
+[![CMake on multiple platforms](https://github.com/pjhusky/sdl3-mini-template-Cmake-FetchContent/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/pjhusky/sdl3-mini-template-Cmake-FetchContent/actions/workflows/cmake-multi-platform.yml)
+
 # About
 
 Minimal starter project with SDL3, fmt and imgui, using clean CMake scripts (no CPM or bootstrapping needed, just pure built-in FetchContent).
