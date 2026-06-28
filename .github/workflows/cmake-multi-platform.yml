@@ -66,6 +66,7 @@ jobs:
           libxinerama-dev \
           libxcursor-dev \
           libxi-dev \
+          libxss-dev \
           libxkbcommon-dev \
           libwayland-dev \
           wayland-protocols
