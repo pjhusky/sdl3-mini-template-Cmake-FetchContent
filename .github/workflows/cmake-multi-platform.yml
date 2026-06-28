@@ -55,21 +55,27 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     # --- ADDED THIS STEP TO FIX THE LINUX BUILD ERROR ---
-    - name: Install SDL3 Dependencies (Linux only)
-      if: runner.os == 'Linux'
+    # - name: Install SDL3 Dependencies (Linux only)
+    #   if: runner.os == 'Linux'
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y \
+    #       libx11-dev \
+    #       libxext-dev \
+    #       libxrandr-dev \
+    #       libxinerama-dev \
+    #       libxcursor-dev \
+    #       libxi-dev \
+    #       libxss-dev \
+    #       libxkbcommon-dev \
+    #       libwayland-dev \
+    #       wayland-protocols
+
+    - name: Install SDL3 Linux Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          libx11-dev \
-          libxext-dev \
-          libxrandr-dev \
-          libxinerama-dev \
-          libxcursor-dev \
-          libxi-dev \
-          libxss-dev \
-          libxkbcommon-dev \
-          libwayland-dev \
-          wayland-protocols
+        sudo apt-get install -y libxtst-dev # Install XTEST and other dependencies
+
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
