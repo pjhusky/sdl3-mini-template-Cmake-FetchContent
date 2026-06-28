@@ -195,6 +195,20 @@ else()
   # CMAKE_HOST_SYSTEM_PROCESSOR automatically holds the 'uname -m' equivalent
   message(STATUS " ---*** Native Architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR} ***--- ")
 
+  # 1. Define variables based on the active operating system
+  if(APPLE)
+      set(LUAJIT_ENV_VARS ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0)
+      set(LUAJIT_EXTRA_FLAGS 
+          "TARGET_CFLAGS=-arch \"${CMAKE_HOST_SYSTEM_PROCESSOR}\"" 
+          "TARGET_LDFLAGS=-arch \"${CMAKE_HOST_SYSTEM_PROCESSOR}\""
+      )
+  else()
+      # No deployment target needed on Linux, keep env clean
+      set(LUAJIT_ENV_VARS "")
+      # Standard x86_64 target flags are automatically handled by clang on Linux
+      set(LUAJIT_EXTRA_FLAGS "")
+  endif()
+
   # Passes Apple Silicon flags directly to LuaJIT's internal Makefile
   ExternalProject_Add(luajit_compile
       SOURCE_DIR        "${LUAJIT_SRC_DIR}"
@@ -218,11 +232,10 @@ else()
       #   changed to
       #     "TARGET_CFLAGS=-arch arm64"
 
-      # with the above fix:
-      BUILD_COMMAND ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
-                    ${MAKE_PROGRAM} -C ${LUAJIT_SRC_DIR} 
-                    HOST_CC=clang TARGET_CC=clang 
-                    "TARGET_CFLAGS=-arch \"${CMAKE_HOST_SYSTEM_PROCESSOR}\"" "TARGET_LDFLAGS=-arch \"${CMAKE_HOST_SYSTEM_PROCESSOR}\""
+      BUILD_COMMAND ${LUAJIT_ENV_VARS} 
+                ${MAKE_PROGRAM} -C ${LUAJIT_SRC_DIR} 
+                HOST_CC=clang TARGET_CC=clang 
+                ${LUAJIT_EXTRA_FLAGS}
 
       # alternative: Use LuaJIT's Built-In Architecture Flags
       # BUILD_COMMAND ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
