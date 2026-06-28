@@ -106,6 +106,8 @@ target_link_libraries(${MY_EXE_TARGET}
     SDL3::SDL3
     lua_lib::lua_lib
     sol3::sol3
+    quickjs::quickjs
+    quickjs::quickjs-libc 
     box2d::box2d
     chipmunk::chipmunk
 )
