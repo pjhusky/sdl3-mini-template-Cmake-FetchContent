@@ -191,6 +191,10 @@ else()
   #       BUILD_BYPRODUCTS  "${LUAJIT_STATIC_LIB}"
   # )
 
+
+  # CMAKE_HOST_SYSTEM_PROCESSOR automatically holds the 'uname -m' equivalent
+  message(STATUS " ---*** Native Architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR} ***--- ")
+
   # Passes Apple Silicon flags directly to LuaJIT's internal Makefile
   ExternalProject_Add(luajit_compile
       SOURCE_DIR        "${LUAJIT_SRC_DIR}"
@@ -218,7 +222,7 @@ else()
       BUILD_COMMAND ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
                     ${MAKE_PROGRAM} -C ${LUAJIT_SRC_DIR} 
                     HOST_CC=clang TARGET_CC=clang 
-                    "TARGET_CFLAGS=-arch arm64" "TARGET_LDFLAGS=-arch arm64"
+                    "TARGET_CFLAGS=-arch \"${CMAKE_HOST_SYSTEM_PROCESSOR}\"" "TARGET_LDFLAGS=-arch \"${CMAKE_HOST_SYSTEM_PROCESSOR}\""
 
       # alternative: Use LuaJIT's Built-In Architecture Flags
       # BUILD_COMMAND ${CMAKE_COMMAND} -E env MACOSX_DEPLOYMENT_TARGET=11.0 
