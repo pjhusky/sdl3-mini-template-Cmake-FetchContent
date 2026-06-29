@@ -3,7 +3,11 @@
 #include <quickjs.h>
 
 // 1. Include QuickJS companion utility headers for system environment functions
-#include <quickjs-libc.h> 
+
+// Force the C++ linker to look for standard unmangled C symbols
+extern "C" {
+    #include <quickjs-libc.h>
+}
 
 
 int mini_quickjs_example() {

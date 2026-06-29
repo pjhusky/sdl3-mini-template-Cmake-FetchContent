@@ -1,8 +1,14 @@
 include(FetchContent)
 
+# The build is failing on your GitHub runner because your FetchContent configuration is trying to use an SSH repository link (git@github.com:quickjs-ng/quickjs.git).
+# While this works perfectly on your local machine (because your computer has your personal SSH private keys registered with GitHub), the GitHub Actions cloud runner does not have your SSH keys. When it tries to handshake via SSH, GitHub denies access.
+# Since quickjs-ng/quickjs is a public repository, you do not need SSH authentication to download it.
+
+# HTTPS URLs allow public repositories to be cloned anonymously by anyone (including automated GitHub cloud runners) without requiring SSH key registration or authentication tokens.
+
 FetchContent_Declare(
     quickjs
-    GIT_REPOSITORY git@github.com:quickjs-ng/quickjs.git
+    GIT_REPOSITORY https://github.com/quickjs-ng/quickjs.git
     GIT_TAG        9d15fb60b67c45fd0de413bb49e48f8dacebac16
     GIT_SHALLOW    TRUE
     GIT_PROGRESS   TRUE

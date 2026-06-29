@@ -106,11 +106,18 @@ target_link_libraries(${MY_EXE_TARGET}
     SDL3::SDL3
     lua_lib::lua_lib
     sol3::sol3
-    quickjs::quickjs
-    quickjs::quickjs-libc 
+    # quickjs::quickjs
+    quickjs::quickjs-libc # ld: warning: ignoring duplicate libraries: '_deps/quickjs-build/libqjs.a'
     box2d::box2d
     chipmunk::chipmunk
 )
+# the 'quickjs::quickjs' above not only adds the lib, but also the include dirs
+# however, 'quickjs::quickjs-libc' is needed as well, however, it re-adds the lib
+# so include lib only once but add include dirs explicitly through 'quickjs::quickjs'
+target_include_directories(${MY_EXE_TARGET} PRIVATE 
+    $<TARGET_PROPERTY:quickjs::quickjs,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
 
 # Set .html suffix for web builds
 if(EMSCRIPTEN)
