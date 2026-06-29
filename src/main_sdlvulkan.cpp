@@ -30,6 +30,7 @@
 
 #include "mini_sol3.h"
 #include "mini_quickjs.h"
+#include "mini_gravity.h"
 
 
 // Volk headers
@@ -353,8 +354,30 @@ int main(int, char**)
 {
     fmt::print("Starting Dear ImGui + Vulkan Renderer example...\n");
 
+    fmt::print( " \n\n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " ###*** sol3 lua test ***### \n" );
     mini_sol3_example();
+    fmt::print( " ###*** sol3 lua test ***### \n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " \n\n" );
+
+    fmt::print( " \n\n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " ###*** quickjs test ***### \n" );
     mini_quickjs_example();
+    fmt::print( " ###*** quickjs test ***### \n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " \n\n" );
+
+
+    fmt::print( " \n\n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " ###*** gravity test ***### \n" );
+    mini_gravity_example();
+    fmt::print( " ###*** gravity test ***### \n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " \n\n" );
 
     // Setup SDL
     // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]

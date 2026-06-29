@@ -9,7 +9,7 @@ include(FetchContent)
 FetchContent_Declare(
     quickjs
     GIT_REPOSITORY https://github.com/quickjs-ng/quickjs.git
-    GIT_TAG        9d15fb60b67c45fd0de413bb49e48f8dacebac16
+    GIT_TAG        v0.15.1
     GIT_SHALLOW    TRUE
     GIT_PROGRESS   TRUE
 )

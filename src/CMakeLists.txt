@@ -101,15 +101,36 @@ set_target_properties(${MY_EXE_TARGET}
 
 target_link_libraries(${MY_EXE_TARGET}
     PRIVATE
+
     imgui::imgui
     fmt::fmt
+
     SDL3::SDL3
-    lua_lib::lua_lib
-    sol3::sol3
-    # quickjs::quickjs
-    quickjs::quickjs-libc # ld: warning: ignoring duplicate libraries: '_deps/quickjs-build/libqjs.a'
+
+    #################
+    ### scripting ###
+    #   !!! lua !!!
+        lua_lib::lua_lib
+        sol3::sol3
+
+    #   !!! javascript !!!
+        # quickjs::quickjs
+        quickjs::quickjs-libc # ld: warning: ignoring duplicate libraries: '_deps/quickjs-build/libqjs.a'
+
+    #   !!! gravity !!!
+        gravity::gravity
+    ### scripting ###
+    #################
+
+
+    ###############
+    ### physics ###
     box2d::box2d
     chipmunk::chipmunk
+    ### physics ###
+    ###############
+
+
 )
 # the 'quickjs::quickjs' above not only adds the lib, but also the include dirs
 # however, 'quickjs::quickjs-libc' is needed as well, however, it re-adds the lib
