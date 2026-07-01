@@ -68,15 +68,17 @@ string(REPLACE
     _content "${_content}"
 )
 
-# Patch 4b: append a fallback amx_Swap64 for platforms where it is not a macro.
-# On x86/x86_64 (Linux, Windows, macOS Intel) amx_Swap64 is typically a no-op
-# macro (amxswap.h); the #ifndef guard makes this stub dead code there.
-# On Apple ARM64 (little-endian) the macro is absent → linker error without it.
-# The AMX binary format is little-endian; on a little-endian host no byte swap
-# is required, so a no-op body is correct on all platforms that reach this code.
+# Patch 4b: append a fallback amx_Swap64 for Apple ARM64.
+# amx.c defines amx_Swap64 for x86/x86_64 and Linux, but the guard excludes
+# __aarch64__ on macOS → "undefined symbol" at link time on Apple Silicon.
+# The AMX binary format is little-endian; on a little-endian ARM64 host no
+# byte swap is required, so a no-op body is correct.
+# The __aarch64__ guard keeps this dead code on every other platform (where
+# amx.c already defines the function under its own condition) so there is no
+# redefinition error anywhere.
 string(APPEND _content
-"\n/* auto-injected: fallback amx_Swap64 for platforms lacking a macro definition */\n"
-"#if PAWN_CELL_SIZE == 64 && !defined amx_Swap64\n"
+"\n/* auto-injected: fallback amx_Swap64 for AArch64 where pawn omits it */\n"
+"#if PAWN_CELL_SIZE == 64 && defined(__aarch64__)\n"
 "#  include <stdint.h>\n"
 "void amx_Swap64(uint64_t *v) { (void)v; }\n"
 "#endif\n"
