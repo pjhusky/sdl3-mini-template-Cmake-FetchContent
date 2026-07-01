@@ -53,12 +53,31 @@ file(WRITE "${_pawn_compiler_cmake}" "${_content}")
 unset(_pawn_compiler_cmake)
 unset(_content)
 
+# ---- patch amx/amx.c (all platforms) -----------------------------------------
+set(_pawn_amx_c "${pawn_SOURCE_DIR}/amx/amx.c")
+file(READ "${_pawn_amx_c}" _content)
+
+# Patch 3: fix upstream bug — strrchr returns char *, not char.
+# Clang 15+ / Xcode 16+ promotes this pointer-to-integer conversion from warning
+# to hard error.  The missing '*' causes four cascading errors (dereference,
+# asprintf type mismatch, dlopen, free).  This is a genuine upstream defect worth
+# reporting; patching locally is cleaner than suppressing -Wint-conversion broadly.
+string(REPLACE
+    [=[char ptr=strrchr(pathbuf,'/')]=]
+    [=[char *ptr=strrchr(pathbuf,'/')]=]
+    _content "${_content}"
+)
+
+file(WRITE "${_pawn_amx_c}" "${_content}")
+unset(_pawn_amx_c)
+unset(_content)
+
 if(WIN32)
     # ---- patch compiler/CMakeLists.txt (Windows-only) ------------------------
     set(_pawn_compiler_cmake "${pawn_SOURCE_DIR}/compiler/CMakeLists.txt")
     file(READ "${_pawn_compiler_cmake}" _content)
 
-    # Patch 3: remove pawncc.rc — it references ../bin/pawn.ico which is absent
+    # Patch 4: remove pawncc.rc — it references ../bin/pawn.ico which is absent
     # from the git repo (binary-distribution only).
     string(REPLACE
         [=[SET(PAWNCC_SRCS ${PAWNCC_SRCS} pawncc.rc)]=]
@@ -74,7 +93,7 @@ if(WIN32)
     set(_pawn_amx_cmake "${pawn_SOURCE_DIR}/amx/CMakeLists.txt")
     file(READ "${_pawn_amx_cmake}" _content)
 
-    # Patch 4: amx SHARED → STATIC
+    # Patch 5: amx SHARED → STATIC
     # The amx DLL does not __declspec(dllexport) its API (amx_Init, amx_Exec,
     # amx_Register, aux_*, …) so the import library is empty and the EXE linker
     # reports LNK2019 for every AMX function.  STATIC avoids the export problem.
