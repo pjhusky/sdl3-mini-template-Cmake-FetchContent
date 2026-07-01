@@ -155,9 +155,22 @@ target_link_libraries(${MY_EXE_TARGET}
 # the 'quickjs::quickjs' above not only adds the lib, but also the include dirs
 # however, 'quickjs::quickjs-libc' is needed as well, however, it re-adds the lib
 # so include lib only once but add include dirs explicitly through 'quickjs::quickjs'
-target_include_directories(${MY_EXE_TARGET} PRIVATE 
+target_include_directories(${MY_EXE_TARGET} PRIVATE
     $<TARGET_PROPERTY:quickjs::quickjs,INTERFACE_INCLUDE_DIRECTORIES>
 )
+
+# pawn: amx.h (in amx/) includes sclinux.h (in compiler/) via a quoted include
+# that falls back to the -I search path.  The INTERFACE dirs on pawn::pawn /
+# pawn_bundle do not reliably propagate to the executable on all platforms, so
+# add them explicitly here.  FetchContent_GetProperties gives us pawn_SOURCE_DIR
+# because external/ is processed before src/ in the root CMakeLists.txt.
+include(FetchContent)
+FetchContent_GetProperties(pawn)
+if(pawn_POPULATED)
+    target_include_directories(${MY_EXE_TARGET} PRIVATE
+        "${pawn_SOURCE_DIR}/compiler"
+        "${pawn_SOURCE_DIR}/amx")
+endif()
 
 
 # Set .html suffix for web builds
