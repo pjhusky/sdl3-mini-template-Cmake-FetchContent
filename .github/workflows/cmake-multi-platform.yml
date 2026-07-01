@@ -155,7 +155,7 @@ jobs:
       shell: pwsh
       run: |
         $ver = "${{ steps.vulkan-ver.outputs.ver }}"
-        $url = "https://sdk.lunarg.com/sdk/download/$ver/windows/VulkanSDK-$ver-Installer.exe"
+        $url = "https://sdk.lunarg.com/sdk/download/$ver/windows/vulkan_sdk.exe"
         Invoke-WebRequest $url -OutFile VulkanSDK.exe
         Start-Process -FilePath ".\VulkanSDK.exe" `
             -ArgumentList "--accept-licenses --default-answer --confirm-command install" `
