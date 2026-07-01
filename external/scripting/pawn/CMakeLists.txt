@@ -38,6 +38,17 @@ string(REPLACE
     _content "${_content}"
 )
 
+# Patch 2: remove the upstream Apple i386 override (all platforms read/write pass)
+# The pawn compiler CMakeLists.txt forces CMAKE_OSX_ARCHITECTURES to "i386" on
+# Apple for historical reasons (pawncc was always a 32-bit host tool).  macOS
+# 10.15 (Catalina) dropped 32-bit support entirely, so libm/libSystem/libSystem
+# no longer ship i386 slices → link failure on any modern macOS runner.
+string(REPLACE
+    [=[SET(CMAKE_OSX_ARCHITECTURES "i386" CACHE STRING "" FORCE)]=]
+    [=[# CMAKE_OSX_ARCHITECTURES i386 removed: macOS 10.15+ dropped 32-bit support]=]
+    _content "${_content}"
+)
+
 file(WRITE "${_pawn_compiler_cmake}" "${_content}")
 unset(_pawn_compiler_cmake)
 unset(_content)
@@ -47,7 +58,7 @@ if(WIN32)
     set(_pawn_compiler_cmake "${pawn_SOURCE_DIR}/compiler/CMakeLists.txt")
     file(READ "${_pawn_compiler_cmake}" _content)
 
-    # Patch 2: remove pawncc.rc — it references ../bin/pawn.ico which is absent
+    # Patch 3: remove pawncc.rc — it references ../bin/pawn.ico which is absent
     # from the git repo (binary-distribution only).
     string(REPLACE
         [=[SET(PAWNCC_SRCS ${PAWNCC_SRCS} pawncc.rc)]=]
@@ -63,7 +74,7 @@ if(WIN32)
     set(_pawn_amx_cmake "${pawn_SOURCE_DIR}/amx/CMakeLists.txt")
     file(READ "${_pawn_amx_cmake}" _content)
 
-    # Patch 3: amx SHARED → STATIC
+    # Patch 4: amx SHARED → STATIC
     # The amx DLL does not __declspec(dllexport) its API (amx_Init, amx_Exec,
     # amx_Register, aux_*, …) so the import library is empty and the EXE linker
     # reports LNK2019 for every AMX function.  STATIC avoids the export problem.
@@ -80,6 +91,20 @@ if(WIN32)
 endif()
 
 add_subdirectory("${pawn_SOURCE_DIR}" "${pawn_BINARY_DIR}")
+
+# Safety net: if the upstream used a different string form for the i386 cache
+# set (e.g. lowercase, different quoting), the file patch above silently no-ops.
+# Setting OSX_ARCHITECTURES "" on the targets here overrides CMAKE_OSX_ARCHITECTURES
+# at the target level (CMake evaluates this at generate time, before any -arch flag
+# is emitted), so both compile and link steps drop the i386 constraint.
+if(APPLE)
+    foreach(_pawn_t pawnc pawncc)
+        if(TARGET ${_pawn_t})
+            set_target_properties(${_pawn_t} PROPERTIES OSX_ARCHITECTURES "")
+        endif()
+    endforeach()
+    unset(_pawn_t)
+endif()
 
 # The upstream pawnc CMakeLists.txt uses PUBLIC -fvisibility=hidden, which
 # propagates to every consumer (including our main exe).  That makes the
