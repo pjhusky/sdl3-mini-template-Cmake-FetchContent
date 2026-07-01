@@ -76,18 +76,17 @@ unset(_content)
 set(_pawn_amx_h "${pawn_SOURCE_DIR}/amx/amx.h")
 file(READ "${_pawn_amx_h}" _content)
 
-# Patch 4: fix <sclinux.h> → relative "../compiler/sclinux.h"
-# amx.h lives in amx/ and includes sclinux.h which lives in compiler/.
-# The upstream amx/CMakeLists.txt exposes compiler/ only PRIVATE (needed to build
-# amx itself) but not INTERFACE (for consumers).  Any target that includes amx.h
-# therefore can't find sclinux.h through angle-bracket search.
-# Switching to a quoted relative path resolves the issue unconditionally: the
-# preprocessor resolves "..." relative to the file containing the directive
-# (amx.h), so "../compiler/sclinux.h" always maps to pawn/compiler/sclinux.h
-# regardless of which file includes amx.h or what the -I search path contains.
+# Patch 4: fix <sclinux.h> → "sclinux.h"
+# sclinux.h lives in amx/ alongside amx.h.  The upstream amx/CMakeLists.txt
+# exposes amx/ only PRIVATE (for building amx itself), so any consumer that
+# includes amx.h without amx/ in its own -I path cannot find sclinux.h.
+# A same-directory quoted include sidesteps the -I path entirely: the
+# preprocessor resolves "sclinux.h" relative to the directory of the file
+# containing the directive (amx.h → amx/), so it always finds amx/sclinux.h
+# regardless of which file includes amx.h or what -I flags the consumer has.
 string(REPLACE
     [=[  #include <sclinux.h>]=]
-    [=[  #include "../compiler/sclinux.h"]=]
+    [=[  #include "sclinux.h"]=]
     _content "${_content}"
 )
 
@@ -191,11 +190,11 @@ endif()
 # define through pawn_bundle to the main executable (mini_pawn.h, pawn_host_mem.c).
 if(TARGET amx)
     target_compile_definitions(amx PUBLIC PAWN_CELL_SIZE=64)
-    # amx.h includes <sclinux.h> which lives in compiler/, not amx/.
-    # The upstream amx/CMakeLists.txt adds compiler/ only PRIVATE (for building amx)
+    # amx.h includes sclinux.h which lives in amx/ alongside amx.h.
+    # The upstream amx/CMakeLists.txt adds amx/ only PRIVATE (for building amx)
     # but not INTERFACE (for consumers).  Expose it so any target including amx.h
-    # can resolve sclinux.h without a separate include_directories call.
-    target_include_directories(amx INTERFACE "${pawn_SOURCE_DIR}/compiler")
+    # can resolve sclinux.h even without the Patch 4 amx.h fix.
+    target_include_directories(amx INTERFACE "${pawn_SOURCE_DIR}/amx")
 endif()
 if(TARGET pawnc)
     target_compile_definitions(pawnc PUBLIC PAWN_CELL_SIZE=64)
