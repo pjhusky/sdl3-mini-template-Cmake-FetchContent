@@ -168,6 +168,11 @@ endif()
 # define through pawn_bundle to the main executable (mini_pawn.h, pawn_host_mem.c).
 if(TARGET amx)
     target_compile_definitions(amx PUBLIC PAWN_CELL_SIZE=64)
+    # amx.h includes <sclinux.h> which lives in compiler/, not amx/.
+    # The upstream amx/CMakeLists.txt adds compiler/ only PRIVATE (for building amx)
+    # but not INTERFACE (for consumers).  Expose it so any target including amx.h
+    # can resolve sclinux.h without a separate include_directories call.
+    target_include_directories(amx INTERFACE "${pawn_SOURCE_DIR}/compiler")
 endif()
 if(TARGET pawnc)
     target_compile_definitions(pawnc PUBLIC PAWN_CELL_SIZE=64)
