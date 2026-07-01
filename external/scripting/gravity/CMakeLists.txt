@@ -32,3 +32,16 @@ add_library(gravity::gravity ALIAS gravityapi)
 
 # This forces anyone who links to gravity (like start2d-noCPM) to use C++20
 target_compile_features(gravityapi INTERFACE cxx_std_20)
+
+# bzero() is a POSIX function absent from the Windows CRT.  gravity_lexer.c
+# calls it without including <strings.h>, and GCC 14+ promotes the resulting
+# implicit-function-declaration warning to a hard error in C99+ modes.
+# Write a one-liner compat header and force-include it for all gravity TUs;
+# no gravity source file needs to be modified.
+if(WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    set(_bzero_shim "${gravity_BINARY_DIR}/bzero_compat.h")
+    file(WRITE "${_bzero_shim}"
+        "#pragma once\n#include <string.h>\n#define bzero(s,n) memset((s),0,(n))\n")
+    target_compile_options(gravityapi PRIVATE -include "${_bzero_shim}")
+    unset(_bzero_shim)
+endif()
