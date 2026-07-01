@@ -42,6 +42,13 @@ if(WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(_bzero_shim "${gravity_BINARY_DIR}/bzero_compat.h")
     file(WRITE "${_bzero_shim}"
         "#pragma once\n#include <string.h>\n#define bzero(s,n) memset((s),0,(n))\n")
-    target_compile_options(gravityapi PRIVATE -include "${_bzero_shim}")
+    # gravity builds both a shared (gravityapi) and a static (gravityapi_s) target;
+    # apply the bzero shim to whichever variants exist.
+    foreach(_gravity_tgt gravityapi gravityapi_s)
+        if(TARGET ${_gravity_tgt})
+            target_compile_options(${_gravity_tgt} PRIVATE -include "${_bzero_shim}")
+        endif()
+    endforeach()
     unset(_bzero_shim)
+    unset(_gravity_tgt)
 endif()
