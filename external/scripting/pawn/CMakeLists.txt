@@ -72,6 +72,34 @@ file(WRITE "${_pawn_amx_c}" "${_content}")
 unset(_pawn_amx_c)
 unset(_content)
 
+# ---- create amx/sclinux.h stub if absent (all platforms) --------------------
+# amx.h line 33 does #include "sclinux.h" (after Patch 4 below).
+# sclinux.h is absent from the current pawn main branch; create a minimal shim
+# in amx/ next to amx.h so the quoted include always resolves without needing
+# any -I path adjustments.  The file is only written when missing so a future
+# pawn commit that ships it again takes precedence.
+set(_pawn_sclinux "${pawn_SOURCE_DIR}/amx/sclinux.h")
+if(NOT EXISTS "${_pawn_sclinux}")
+    file(WRITE "${_pawn_sclinux}"
+"/* sclinux.h — auto-generated stub: file absent from this pawn checkout.
+   Provides the Unix string-comparison aliases used by amx.h on GCC/Clang. */
+#pragma once
+#if defined __linux__ || defined __FreeBSD__ || defined __OpenBSD__ || defined __APPLE__
+#  include <strings.h>
+#  ifndef stricmp
+#    define stricmp(a,b)    strcasecmp((a),(b))
+#  endif
+#  ifndef strnicmp
+#    define strnicmp(a,b,n) strncasecmp((a),(b),(n))
+#  endif
+#  ifndef pstrcmp
+#    define pstrcmp(a,b)    strcasecmp((a),(b))
+#  endif
+#endif
+")
+endif()
+unset(_pawn_sclinux)
+
 # ---- patch amx/amx.h (all platforms) ----------------------------------------
 set(_pawn_amx_h "${pawn_SOURCE_DIR}/amx/amx.h")
 file(READ "${_pawn_amx_h}" _content)
