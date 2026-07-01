@@ -135,7 +135,7 @@ jobs:
       shell: pwsh
       run: |
         $ver = (Invoke-RestMethod "https://vulkan.lunarg.com/sdk/latest/windows.json")."64"
-        echo "ver=$ver" >> $env:GITHUB_OUTPUT
+        "ver=$ver" | Out-File -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
 
     - name: Cache Vulkan SDK (Windows)
       if: runner.os == 'Windows'
