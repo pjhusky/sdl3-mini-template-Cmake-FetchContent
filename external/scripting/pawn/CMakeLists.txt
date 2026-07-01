@@ -97,8 +97,9 @@ add_subdirectory("${pawn_SOURCE_DIR}" "${pawn_BINARY_DIR}")
 # Setting OSX_ARCHITECTURES "" on the targets here overrides CMAKE_OSX_ARCHITECTURES
 # at the target level (CMake evaluates this at generate time, before any -arch flag
 # is emitted), so both compile and link steps drop the i386 constraint.
+# Targets affected: pawnc (static lib), pawncc (compiler exe), stategraph (utility exe).
 if(APPLE)
-    foreach(_pawn_t pawnc pawncc)
+    foreach(_pawn_t pawnc pawncc stategraph)
         if(TARGET ${_pawn_t})
             set_target_properties(${_pawn_t} PROPERTIES OSX_ARCHITECTURES "")
         endif()
