@@ -126,6 +126,7 @@ jobs:
           libxss-dev \
           libxtst-dev \
           libwayland-dev \
+          wayland-protocols \
           libdecor-0-dev \
           libgl1-mesa-dev
 
