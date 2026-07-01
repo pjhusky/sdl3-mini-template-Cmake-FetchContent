@@ -53,28 +53,33 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
+          # 2. MinGW/GCC on Windows — Ninja generator required (VS generator is incompatible with GCC)
+          #    MinGW-w64 (gcc/g++) is pre-installed at C:\msys64\mingw64\bin on windows-latest.
+          #    cmake_generator is empty for all other entries; the Configure step appends it safely.
+          - os: windows-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+            cmake_generator: -G Ninja
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-          # 2. Explicitly map macos-latest (ARM64) to use Clang
+          # 3. Explicitly map macos-latest (ARM64) to use Clang
           - os: macos-latest
             c_compiler: clang
             cpp_compiler: clang++
-          # 3. Explicitly map macos-15 (Intel x86_64) to use Clang
+          # 4. Explicitly map macos-15 (Intel x86_64) to use Clang
           - os: macos-15-intel
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
           - os: windows-latest
-            c_compiler: gcc
-          - os: windows-latest
             c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
-          # 4. Prevent both macOS runners from testing invalid GCC/MSVC combinations
+          # 5. Prevent both macOS runners from testing invalid GCC/MSVC combinations
           - os: macos-latest
             c_compiler: gcc
           - os: macos-latest
@@ -94,22 +99,11 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    # --- ADDED THIS STEP TO FIX THE LINUX BUILD ERROR ---
-    # - name: Install SDL3 Dependencies (Linux only)
-    #   if: runner.os == 'Linux'
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install -y \
-    #       libx11-dev \
-    #       libxext-dev \
-    #       libxrandr-dev \
-    #       libxinerama-dev \
-    #       libxcursor-dev \
-    #       libxi-dev \
-    #       libxss-dev \
-    #       libxkbcommon-dev \
-    #       libwayland-dev \
-    #       wayland-protocols
+    - name: Add MinGW to PATH (Windows GCC)
+      if: runner.os == 'Windows' && matrix.c_compiler == 'gcc'
+      shell: pwsh
+      run: |
+        "C:\msys64\mingw64\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
 
     - name: Install SDL3 Linux Dependencies
       if: runner.os == 'Linux'
@@ -128,16 +122,34 @@ jobs:
           libwayland-dev \
           wayland-protocols \
           libdecor-0-dev \
-          libgl1-mesa-dev
+          libgl1-mesa-dev \
+          libvulkan-dev
+
+    - name: Install Vulkan Headers (macOS)
+      if: runner.os == 'macOS'
+      run: brew install vulkan-headers
+
+    - name: Install Vulkan SDK (Windows)
+      if: runner.os == 'Windows'
+      uses: humbletim/setup-vulkan-sdk@v1.2.0
+      with:
+        vulkan-query-version: latest
+        vulkan-components: Vulkan-Headers, Vulkan-Loader
+        vulkan-use-cache: true
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      # shell: bash ensures consistent quoting on all platforms; cmake_generator is empty for
+      # non-MinGW entries and expands to "-G Ninja" for the Windows/GCC (MinGW) entry.
+      shell: bash
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DIMGUI_GFX_BACKEND=SDL_VULKAN
+        ${{ matrix.cmake_generator }}
         -S ${{ github.workspace }}
 
     - name: Build
