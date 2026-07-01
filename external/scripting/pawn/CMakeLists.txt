@@ -94,16 +94,25 @@ add_subdirectory("${pawn_SOURCE_DIR}" "${pawn_BINARY_DIR}")
 
 # Safety net: if the upstream used a different string form for the i386 cache
 # set (e.g. lowercase, different quoting), the file patch above silently no-ops.
-# Setting OSX_ARCHITECTURES "" on the targets here overrides CMAKE_OSX_ARCHITECTURES
-# at the target level (CMake evaluates this at generate time, before any -arch flag
-# is emitted), so both compile and link steps drop the i386 constraint.
-# Targets affected: pawnc (static lib), pawncc (compiler exe), stategraph (utility exe).
+# Setting OSX_ARCHITECTURES "" on every target defined in the pawn compiler and
+# amx directories overrides CMAKE_OSX_ARCHITECTURES at the target level (CMake
+# evaluates this at generate time, before any -arch flag is emitted), so both
+# compile and link steps drop the i386 constraint for the entire pawn subtree.
 if(APPLE)
-    foreach(_pawn_t pawnc pawncc stategraph)
-        if(TARGET ${_pawn_t})
+    foreach(_pawn_dir
+            "${pawn_SOURCE_DIR}/compiler"
+            "${pawn_SOURCE_DIR}/amx"
+    )
+        get_property(_pawn_dir_targets
+            DIRECTORY "${_pawn_dir}"
+            PROPERTY BUILDSYSTEM_TARGETS
+        )
+        foreach(_pawn_t ${_pawn_dir_targets})
             set_target_properties(${_pawn_t} PROPERTIES OSX_ARCHITECTURES "")
-        endif()
+        endforeach()
     endforeach()
+    unset(_pawn_dir)
+    unset(_pawn_dir_targets)
     unset(_pawn_t)
 endif()
 
