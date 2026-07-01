@@ -92,29 +92,38 @@ endif()
 
 add_subdirectory("${pawn_SOURCE_DIR}" "${pawn_BINARY_DIR}")
 
-# Safety net: if the upstream used a different string form for the i386 cache
-# set (e.g. lowercase, different quoting), the file patch above silently no-ops.
-# Setting OSX_ARCHITECTURES "" on every target defined in the pawn compiler and
-# amx directories overrides CMAKE_OSX_ARCHITECTURES at the target level (CMake
-# evaluates this at generate time, before any -arch flag is emitted), so both
-# compile and link steps drop the i386 constraint for the entire pawn subtree.
-if(APPLE)
-    foreach(_pawn_dir
-            "${pawn_SOURCE_DIR}/compiler"
-            "${pawn_SOURCE_DIR}/amx"
+# We only need pawnc (compiler library) and amx (runtime library).
+# All other pawn targets — pawncc, stategraph, pawndisasm, amxArgs, amxFloat,
+# amxString, … — are excluded from the default build on every platform.
+# This avoids compiling extension modules that have known issues with strict
+# modern compilers (e.g. Clang 15+/Xcode 16+ promotes pointer↔integer implicit
+# conversions from warning to hard error).
+# On Apple, OSX_ARCHITECTURES "" is also set on the two needed targets to
+# override the upstream's CMAKE_OSX_ARCHITECTURES "i386" cache entry, which
+# would otherwise prevent them from compiling on macOS 10.15+ (no i386 libc).
+set(_pawn_needed pawnc amx)
+foreach(_pawn_dir
+        "${pawn_SOURCE_DIR}/compiler"
+        "${pawn_SOURCE_DIR}/amx"
+)
+    get_property(_pawn_dir_targets
+        DIRECTORY "${_pawn_dir}"
+        PROPERTY BUILDSYSTEM_TARGETS
     )
-        get_property(_pawn_dir_targets
-            DIRECTORY "${_pawn_dir}"
-            PROPERTY BUILDSYSTEM_TARGETS
-        )
-        foreach(_pawn_t ${_pawn_dir_targets})
-            set_target_properties(${_pawn_t} PROPERTIES OSX_ARCHITECTURES "")
-        endforeach()
+    foreach(_pawn_t ${_pawn_dir_targets})
+        if("${_pawn_t}" IN_LIST _pawn_needed)
+            if(APPLE)
+                set_target_properties(${_pawn_t} PROPERTIES OSX_ARCHITECTURES "")
+            endif()
+        else()
+            set_target_properties(${_pawn_t} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+        endif()
     endforeach()
-    unset(_pawn_dir)
-    unset(_pawn_dir_targets)
-    unset(_pawn_t)
-endif()
+endforeach()
+unset(_pawn_dir)
+unset(_pawn_dir_targets)
+unset(_pawn_t)
+unset(_pawn_needed)
 
 # The upstream pawnc CMakeLists.txt uses PUBLIC -fvisibility=hidden, which
 # propagates to every consumer (including our main exe).  That makes the
