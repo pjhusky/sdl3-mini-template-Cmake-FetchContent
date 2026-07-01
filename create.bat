@@ -15,7 +15,6 @@
 )
 @ECHO CMAKE_DEFINES=%CMAKE_DEFINES%
 
-
 @REM @ECHO.
 @REM @ECHO ###############################
 @REM @ECHO ### Start creating (%TIME%) ###
@@ -26,7 +25,12 @@
 @REM -DLUA_MODE=Luajit_OriginalExternalAdd [Default]
 @REM -DLUA_MODE=Luajit_WohlsoftCmakeWrapper
 @REM -DLUA_MODE=VanillaLua
-cmake -S . -B .\build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 18 2026" -A x64 -DIMGUI_GFX_BACKEND="%OPTION_BACKEND%" "%2"
+
+@REM -DPAWN_HOST_MEMORY=ON  ...   # in-memory (default)
+@REM -DPAWN_HOST_MEMORY=OFF ...   # file-based (pawn_host.c)
+@SET PAWN_MODE=-DPAWN_HOST_MEMORY=ON
+@REM @SET PAWN_MODE=-DPAWN_HOST_MEMORY=OFF
+cmake -S . -B .\build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 18 2026" -A x64 -DIMGUI_GFX_BACKEND="%OPTION_BACKEND%" "%PAWN_MODE%" "%2" 
 @REM %CMAKE_DEFINES%
 
 @REM Use "--" to forward the argument to the underlying build tool (e.g., MSBuild or Ninja)

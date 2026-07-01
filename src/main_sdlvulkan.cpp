@@ -31,6 +31,7 @@
 #include "mini_sol3.h"
 #include "mini_quickjs.h"
 #include "mini_gravity.h"
+#include "mini_pawn.h"
 
 
 // Volk headers
@@ -378,6 +379,19 @@ int main(int, char**)
     fmt::print( " ###*** gravity test ***### \n" );
     fmt::print( " ########################### \n" );
     fmt::print( " \n\n" );
+
+    fmt::print( " \n\n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " ###*** pawn test ***### \n" );
+#ifdef PAWN_HOST_MEMORY
+    mini_pawn_example_mem();
+#else
+    mini_pawn_example();
+#endif
+    fmt::print( " ###*** pawn test ***### \n" );
+    fmt::print( " ########################### \n" );
+    fmt::print( " \n\n" );
+
 
     // Setup SDL
     // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts would likely be your SDL_AppInit() function]

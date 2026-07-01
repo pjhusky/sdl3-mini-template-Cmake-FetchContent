@@ -10,11 +10,12 @@ add_subdirectory(SDL3)
 add_subdirectory(imgui) # imgui depends on SDL3, so it must be added after SDL3
 add_subdirectory(fmt)
 
+# scripting languages
 add_subdirectory(scripting/lua-based)
-
 add_subdirectory(scripting/quickjs)
-
 add_subdirectory(scripting/gravity)
+add_subdirectory(scripting/dyncall)
+add_subdirectory(scripting/pawn)
 
 add_subdirectory(box2d)
 add_subdirectory(Chipmunk2D)

@@ -4,9 +4,24 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Define the target name in one central place
 set(MY_EXE_TARGET "start2d-noCPM" CACHE INTERNAL "Main executable target name")
 
+option(PAWN_HOST_MEMORY "Use in-memory pawn host callbacks (no temp files on disk)" ON)
+if(PAWN_HOST_MEMORY)
+    set(_pawn_host_src pawn_host_mem.c)
+else()
+    set(_pawn_host_src pawn_host.c)
+endif()
+message(STATUS "Pawn host: ${_pawn_host_src} (PAWN_HOST_MEMORY=${PAWN_HOST_MEMORY})")
+
 add_executable(${MY_EXE_TARGET}
     main.cpp
+    ${_pawn_host_src}
 )
+unset(_pawn_host_src)
+
+# Expose the option to C/C++ so mini_pawn.h can guard each sample variant
+if(PAWN_HOST_MEMORY)
+    target_compile_definitions(${MY_EXE_TARGET} PRIVATE PAWN_HOST_MEMORY)
+endif()
 
 target_compile_features(${MY_EXE_TARGET} PUBLIC cxx_std_17)
 
@@ -119,6 +134,11 @@ target_link_libraries(${MY_EXE_TARGET}
 
     #   !!! gravity !!!
         gravity::gravity
+
+
+    #   !!! pawn !!!
+    dyncall::dyncall
+    pawn::pawn
     ### scripting ###
     #################
 
