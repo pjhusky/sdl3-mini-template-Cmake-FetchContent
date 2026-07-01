@@ -72,12 +72,34 @@ file(WRITE "${_pawn_amx_c}" "${_content}")
 unset(_pawn_amx_c)
 unset(_content)
 
+# ---- patch amx/CMakeLists.txt (all platforms) --------------------------------
+set(_pawn_amx_cmake "${pawn_SOURCE_DIR}/amx/CMakeLists.txt")
+file(READ "${_pawn_amx_cmake}" _content)
+
+# Patch 4: amx SHARED → STATIC (needed on Windows and macOS; Linux is already STATIC)
+# As a shared library, amx cannot have unresolved symbols at link time:
+#   Windows — amx DLL has no __declspec(dllexport), so the import library is
+#             empty and the EXE linker reports LNK2019 for every AMX function.
+#   macOS   — amx_Swap64 (and others) are undefined in the dylib at link time
+#             because they are only satisfied later by the host executable.
+# STATIC defers all symbol resolution to the final executable link.
+# On Linux amx/CMakeLists.txt already uses STATIC; string(REPLACE) no-ops safely.
+string(REPLACE
+    [=[ADD_LIBRARY(amx SHARED ${AMXLIB_SRCS})]=]
+    [=[ADD_LIBRARY(amx STATIC ${AMXLIB_SRCS})]=]
+    _content "${_content}"
+)
+
+file(WRITE "${_pawn_amx_cmake}" "${_content}")
+unset(_pawn_amx_cmake)
+unset(_content)
+
 if(WIN32)
     # ---- patch compiler/CMakeLists.txt (Windows-only) ------------------------
     set(_pawn_compiler_cmake "${pawn_SOURCE_DIR}/compiler/CMakeLists.txt")
     file(READ "${_pawn_compiler_cmake}" _content)
 
-    # Patch 4: remove pawncc.rc — it references ../bin/pawn.ico which is absent
+    # Patch 5: remove pawncc.rc — it references ../bin/pawn.ico which is absent
     # from the git repo (binary-distribution only).
     string(REPLACE
         [=[SET(PAWNCC_SRCS ${PAWNCC_SRCS} pawncc.rc)]=]
@@ -87,25 +109,6 @@ if(WIN32)
 
     file(WRITE "${_pawn_compiler_cmake}" "${_content}")
     unset(_pawn_compiler_cmake)
-    unset(_content)
-
-    # ---- patch amx/CMakeLists.txt (Windows-only) -----------------------------
-    set(_pawn_amx_cmake "${pawn_SOURCE_DIR}/amx/CMakeLists.txt")
-    file(READ "${_pawn_amx_cmake}" _content)
-
-    # Patch 5: amx SHARED → STATIC
-    # The amx DLL does not __declspec(dllexport) its API (amx_Init, amx_Exec,
-    # amx_Register, aux_*, …) so the import library is empty and the EXE linker
-    # reports LNK2019 for every AMX function.  STATIC avoids the export problem.
-    # On Linux amx/CMakeLists.txt already uses STATIC unconditionally.
-    string(REPLACE
-        [=[ADD_LIBRARY(amx SHARED ${AMXLIB_SRCS})]=]
-        [=[ADD_LIBRARY(amx STATIC ${AMXLIB_SRCS})]=]
-        _content "${_content}"
-    )
-
-    file(WRITE "${_pawn_amx_cmake}" "${_content}")
-    unset(_pawn_amx_cmake)
     unset(_content)
 endif()
 
