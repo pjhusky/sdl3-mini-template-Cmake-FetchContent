@@ -125,21 +125,44 @@ jobs:
           libgl1-mesa-dev \
           libvulkan-dev
 
-    - name: Install Vulkan Headers (macOS)
+    - name: Install Vulkan SDK (macOS)
       if: runner.os == 'macOS'
-      run: brew install vulkan-headers
+      run: brew install vulkan-headers vulkan-loader
 
-    - name: Install Vulkan SDK (Windows)
+    - name: Get Vulkan SDK version (Windows)
+      if: runner.os == 'Windows'
+      id: vulkan-ver
+      shell: pwsh
+      run: |
+        $ver = (Invoke-RestMethod "https://vulkan.lunarg.com/sdk/latest/windows.json")."64"
+        echo "ver=$ver" >> $env:GITHUB_OUTPUT
+
+    - name: Cache Vulkan SDK (Windows)
+      if: runner.os == 'Windows'
+      id: vulkan-cache
+      uses: actions/cache@v4
+      with:
+        path: C:\VulkanSDK\${{ steps.vulkan-ver.outputs.ver }}
+        key: vulkan-sdk-windows-${{ steps.vulkan-ver.outputs.ver }}
+
+    - name: Download and install Vulkan SDK (Windows, cache miss)
+      if: runner.os == 'Windows' && steps.vulkan-cache.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: |
+        $ver = "${{ steps.vulkan-ver.outputs.ver }}"
+        $url = "https://sdk.lunarg.com/sdk/download/$ver/windows/VulkanSDK-$ver-Installer.exe"
+        Invoke-WebRequest $url -OutFile VulkanSDK.exe
+        Start-Process -FilePath ".\VulkanSDK.exe" `
+            -ArgumentList "--accept-licenses --default-answer --confirm-command install" `
+            -NoNewWindow -Wait
+
+    - name: Set Vulkan SDK environment (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        choco install vulkansdk --no-progress -y
-        $sdkPath = (Get-ChildItem "C:\VulkanSDK" -Directory -ErrorAction SilentlyContinue |
-                    Sort-Object Name -Descending | Select-Object -First 1).FullName
-        if ($sdkPath) {
-          "VULKAN_SDK=$sdkPath"       | Out-File -Append $env:GITHUB_ENV -Encoding utf8
-          "$sdkPath\Bin"              | Out-File -Append $env:GITHUB_PATH -Encoding utf8
-        }
+        $sdkPath = "C:\VulkanSDK\${{ steps.vulkan-ver.outputs.ver }}"
+        "VULKAN_SDK=$sdkPath" | Out-File -Append $env:GITHUB_ENV -Encoding utf8
+        "$sdkPath\Bin"        | Out-File -Append $env:GITHUB_PATH -Encoding utf8
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
