@@ -134,7 +134,12 @@ jobs:
       id: vulkan-ver
       shell: pwsh
       run: |
-        $ver = (Invoke-RestMethod "https://vulkan.lunarg.com/sdk/latest/windows.json")."64"
+        $resp = Invoke-RestMethod "https://vulkan.lunarg.com/sdk/latest/windows.json"
+        Write-Host "LunarG API response: $($resp | ConvertTo-Json -Compress)"
+        # Key was "64" historically; probe common alternatives in case the schema changed
+        $ver = @($resp."64", $resp.windows, $resp.version) | Where-Object { $_ } | Select-Object -First 1
+        if (-not $ver) { throw "Cannot determine Vulkan SDK version from LunarG response: $($resp | ConvertTo-Json -Compress)" }
+        Write-Host "Vulkan SDK version: $ver"
         "ver=$ver" | Out-File -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
 
     - name: Cache Vulkan SDK (Windows)
