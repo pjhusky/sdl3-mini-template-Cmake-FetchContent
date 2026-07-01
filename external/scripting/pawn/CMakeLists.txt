@@ -72,11 +72,34 @@ file(WRITE "${_pawn_amx_c}" "${_content}")
 unset(_pawn_amx_c)
 unset(_content)
 
+# ---- patch amx/amx.h (all platforms) ----------------------------------------
+set(_pawn_amx_h "${pawn_SOURCE_DIR}/amx/amx.h")
+file(READ "${_pawn_amx_h}" _content)
+
+# Patch 4: fix <sclinux.h> → relative "../compiler/sclinux.h"
+# amx.h lives in amx/ and includes sclinux.h which lives in compiler/.
+# The upstream amx/CMakeLists.txt exposes compiler/ only PRIVATE (needed to build
+# amx itself) but not INTERFACE (for consumers).  Any target that includes amx.h
+# therefore can't find sclinux.h through angle-bracket search.
+# Switching to a quoted relative path resolves the issue unconditionally: the
+# preprocessor resolves "..." relative to the file containing the directive
+# (amx.h), so "../compiler/sclinux.h" always maps to pawn/compiler/sclinux.h
+# regardless of which file includes amx.h or what the -I search path contains.
+string(REPLACE
+    [=[  #include <sclinux.h>]=]
+    [=[  #include "../compiler/sclinux.h"]=]
+    _content "${_content}"
+)
+
+file(WRITE "${_pawn_amx_h}" "${_content}")
+unset(_pawn_amx_h)
+unset(_content)
+
 # ---- patch amx/CMakeLists.txt (all platforms) --------------------------------
 set(_pawn_amx_cmake "${pawn_SOURCE_DIR}/amx/CMakeLists.txt")
 file(READ "${_pawn_amx_cmake}" _content)
 
-# Patch 4: amx SHARED → STATIC (needed on Windows and macOS; Linux is already STATIC)
+# Patch 5: amx SHARED → STATIC (needed on Windows and macOS; Linux is already STATIC)
 # As a shared library, amx cannot have unresolved symbols at link time:
 #   Windows — amx DLL has no __declspec(dllexport), so the import library is
 #             empty and the EXE linker reports LNK2019 for every AMX function.
@@ -99,7 +122,7 @@ if(WIN32)
     set(_pawn_compiler_cmake "${pawn_SOURCE_DIR}/compiler/CMakeLists.txt")
     file(READ "${_pawn_compiler_cmake}" _content)
 
-    # Patch 5: remove pawncc.rc — it references ../bin/pawn.ico which is absent
+    # Patch 6: remove pawncc.rc — it references ../bin/pawn.ico which is absent
     # from the git repo (binary-distribution only).
     string(REPLACE
         [=[SET(PAWNCC_SRCS ${PAWNCC_SRCS} pawncc.rc)]=]
