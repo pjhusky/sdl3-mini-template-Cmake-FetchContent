@@ -27,11 +27,17 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 FetchContent_MakeAvailable( gravity )
 
-# This binds the internal 'gravity' target to a global 'gravity::gravity' name
-add_library(gravity::gravity ALIAS gravityapi)
+# This binds the internal 'gravity' target to a global 'gravity::gravity' name.
+# We use the static target (gravityapi_s), not the shared gravityapi.dll: on
+# MSVC, gravity's foundation class globals (gravity_class_int, gravity_class_float,
+# etc., used by macros like VALUE_ISA_INT/VALUE_FROM_INT) are declared as plain
+# `extern` with no dllexport/dllimport annotation, so MSVC never exports them from
+# the DLL and any consumer using those macros fails to link. Static linking sidesteps
+# that gap entirely, and matches how gravity's own CLI links itself.
+add_library(gravity::gravity ALIAS gravityapi_s)
 
 # This forces anyone who links to gravity (like start2d-noCPM) to use C++20
-target_compile_features(gravityapi INTERFACE cxx_std_20)
+target_compile_features(gravityapi_s INTERFACE cxx_std_20)
 
 # bzero() is a POSIX function absent from the Windows CRT.  gravity_lexer.c
 # calls it without including <strings.h>, and GCC 14+ promotes the resulting
