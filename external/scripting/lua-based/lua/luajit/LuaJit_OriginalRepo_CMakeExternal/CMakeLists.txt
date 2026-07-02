@@ -46,7 +46,6 @@ FetchContent_MakeAvailable(${LIB_TO_BUILD})
 set(LUAJIT_SRC_DIR  ${${LIB_TO_BUILD}_SOURCE_DIR})
 set(LUAJIT_BIN_DIR  ${${LIB_TO_BUILD}_BINARY_DIR})
 
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   message(STATUS "Using MSVC compiler")
   # Add MSVC-specific flags here (e.g., /W4)
