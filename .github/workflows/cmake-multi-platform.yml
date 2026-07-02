@@ -127,6 +127,10 @@ jobs:
 
     - name: Install Vulkan SDK (macOS)
       if: runner.os == 'macOS'
+      env:
+        # aws/tap is pre-installed on GitHub runners but not trusted under Homebrew 5.x
+        # tap-trust rules; suppress the warning since we don't use that tap directly.
+        HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
       run: brew install vulkan-headers vulkan-loader
 
     - name: Get Vulkan SDK version (Windows)
@@ -145,7 +149,7 @@ jobs:
     - name: Cache Vulkan SDK (Windows)
       if: runner.os == 'Windows'
       id: vulkan-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: C:\VulkanSDK\${{ steps.vulkan-ver.outputs.ver }}
         key: vulkan-sdk-windows-${{ steps.vulkan-ver.outputs.ver }}
