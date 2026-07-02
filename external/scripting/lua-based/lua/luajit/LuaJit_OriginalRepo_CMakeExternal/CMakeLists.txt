@@ -66,6 +66,11 @@ if(WIN32)
     
   set(LUAJIT_IMPLIB   "${LUAJIT_SRC_DIR}/src/lua51.lib")
 
+  # msvcbuild.bat generates luajit.h via its internal buildvm step.
+  # Declare it as a BUILD_BYPRODUCT so Ninja knows the ExternalProject produces
+  # it and won't compile any consumer (main.cpp) until luajit_compile finishes.
+  set(LUAJIT_H "${LUAJIT_SRC_DIR}/src/luajit.h")
+
   ExternalProject_Add(luajit_compile
         SOURCE_DIR        "${LUAJIT_SRC_DIR}"
         BINARY_DIR        "${LUAJIT_SRC_DIR}/src"   # BUILD_COMMAND runs here
@@ -74,6 +79,7 @@ if(WIN32)
         INSTALL_COMMAND   ""
         BUILD_BYPRODUCTS  "${LUAJIT_DLL}"
                           "${LUAJIT_IMPLIB}"
+                          "${LUAJIT_H}"
     )
 
   add_library(luajit_lib SHARED IMPORTED GLOBAL)

@@ -46,6 +46,14 @@ target_compile_features(${MY_EXE_TARGET} PUBLIC cxx_std_17)
 
 # 4. Ensure the external project builds BEFORE your executable
 add_dependencies(${MY_EXE_TARGET} lua_lib::lua_lib)
+# On Windows, LuaJIT is built via ExternalProject (luajit_compile) which generates
+# luajit.h through its internal buildvm step.  CMake's add_dependencies() on an
+# IMPORTED target does not propagate through to ExternalProject targets in Ninja,
+# so we add the dependency directly.  The if(TARGET) guard keeps this inert on
+# Linux/macOS where luajit_compile doesn't exist.
+if(TARGET luajit_compile)
+    add_dependencies(${MY_EXE_TARGET} luajit_compile)
+endif()
 
 ### !!! CMAKE_LIBRARY_OUTPUT_DIRECTORY didn't help with copying SDL3.dll to the output directory, so we need to do it manually on Windows after build. !!! ###
 if(WIN32)
