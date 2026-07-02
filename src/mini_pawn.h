@@ -17,23 +17,7 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 
-#ifndef MINI_NATIVE_C_FUNCS
-#define MINI_NATIVE_C_FUNCS
-namespace {
-    static int nativeC_intAdd( const int a, const int b ) {
-
-        const int result = a + b;
-        printf( "%s: a = %d, b = %d, a + b = %d\n", __FUNCTION__, a, b, result );
-        return result;
-    }
-    static float nativeC_floatAdd( const float a, const float b ) {
-
-        const float result = a + b;
-        printf( "%s: a = %f, b = %f, a + b = %f\n", __FUNCTION__, a, b, result );
-        return result;
-    }
-}
-#endif
+#include "mini_native_functions.h"
 
 // ---------------------------------------------------------------------------
 // Native: print(const str[])
@@ -173,15 +157,20 @@ inline void mini_pawn_example_mem()
         "\n"
         "main()\n"
         "{\n"
-        "    new r1 = intAdd(7, 5);\n"
-        "    print(\"[pawn-mem] intAdd(7, 5) = \");\n"
-        "    print_int(r1);\n"
-        "\n"
         "    new Float:r2 = floatAdd(1.5, 2.25);\n"
         "    print(\"[pawn-mem] floatAdd(1.5, 2.25) = \");\n"
         "    print_float(r2);\n"
         "\n"
-        "    return 0;\n"
+        "    new r1 = intAdd(7, 5);\n"
+        "    print(\"[pawn-mem] intAdd(7, 5) = \");\n"
+        "    print_int(r1);\n"
+        "\n"
+        "    print(\"\\n\");\n"
+        "    print(\"pawn>> float ret val = \");\n"
+        "    print_float(r2);\n"
+        "    print(\"pawn>> int ret val = \");\n"
+        "    print_int(r1);\n"
+        "    return r1;\n"
         "}\n";
 
     // --- 1. Register the source string with the in-memory host ---
@@ -250,15 +239,20 @@ inline void mini_pawn_example()
         "\n"
         "main()\n"
         "{\n"
-        "    new r1 = intAdd(7, 5);\n"
-        "    print(\"[pawn-file] intAdd(7, 5) = \");\n"
-        "    print_int(r1);\n"
-        "\n"
         "    new Float:r2 = floatAdd(1.5, 2.25);\n"
         "    print(\"[pawn-file] floatAdd(1.5, 2.25) = \");\n"
         "    print_float(r2);\n"
         "\n"
-        "    return 0;\n"
+        "    new r1 = intAdd(7, 5);\n"
+        "    print(\"[pawn-file] intAdd(7, 5) = \");\n"
+        "    print_int(r1);\n"
+        "\n"
+        "    print(\"\\n\");\n"
+        "    print(\"pawn>> float ret val = \");\n"
+        "    print_float(r2);\n"
+        "    print(\"pawn>> int ret val = \");\n"
+        "    print_int(r1);\n"
+        "    return r1;\n"
         "}\n";
 
     // --- 1. Write source to a temp file ---

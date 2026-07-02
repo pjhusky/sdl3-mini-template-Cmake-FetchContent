@@ -11,6 +11,9 @@
 	#include <emscripten.h>
 #endif
 
+#include "mini_native_functions.h"
+
+
 
 void mini_sol3_example() {
 // create an empty lua state
@@ -26,6 +29,10 @@ void mini_sol3_example() {
 	lua.open_libraries(sol::lib::base);
 	// you can open all libraries by passing no arguments
 	// lua.open_libraries();
+
+	// Register intAdd/floatAdd as global native functions callable from Lua
+	lua.set_function("intAdd", &nativeC_intAdd);
+	lua.set_function("floatAdd", &nativeC_floatAdd);
 
 
 
@@ -110,6 +117,25 @@ lua.set_function("print", [](sol::variadic_args args) {
 			std::cout << "the fourth script failed, which "
 			             "was intentional!\t\nError: "
 			          << err.what() << std::endl;
+		}
+	}
+
+	{
+		std::cout << "\n--- Running Call-Native-C Script ---\n";
+		auto result = lua.script(
+		     "local resFloat = floatAdd(18.5, 44.25) \n"
+			 "print(\"lua>> resFloat = \" .. resFloat) \n"
+		     "local resInt = intAdd(14, 22) \n"
+			 "print(\"lua>> resInt = \" .. resInt) \n"
+		     "return resInt",
+		     simple_handler);
+		if (result.valid()) {
+			int value = result;
+			std::cout << "sol3/lua execution success. intAdd(14, 22) returned: " << value << std::endl;
+		}
+		else {
+			sol::error err = result;
+			std::cout << "Call-Native-C script failed! Error: " << err.what() << std::endl;
 		}
 	}
 
