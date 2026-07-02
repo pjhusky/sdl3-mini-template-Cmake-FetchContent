@@ -195,6 +195,12 @@ elseif(WIN32)
       # branch ("if exist ...") which cmd.exe syntax bash cannot parse.
       # TARGET_SYS=Windows tells LuaJIT the binary target is still Windows PE.
       # BUILDMODE=static produces libluajit.a (no DLL).
+      #
+      #
+      # "Windows PE" means the Portable Executable format — the binary/executable file format Windows uses for .exe, .dll, and .lib/.a files (analogous to ELF on Linux or Mach-O on macOS). In that comment, the distinction is between two separate things LuaJIT's Makefile needs to know:
+      # 1. Which Makefile syntax branch to use (build-host concern) — controlled by OS=. Setting OS= (empty) makes the Makefile take its POSIX branch, since we're actually running the build through a bash-like shell (MinGW/MSYS) that can't parse cmd.exe's if exist ... syntax.
+      # 2. What the compiled output is actually for (target concern) — controlled by TARGET_SYS=Windows. This tells LuaJIT's build logic to still produce Windows-format binaries (PE), with Windows-specific behavior (e.g., __declspec, symbol export handling, .lib conventions) — as opposed to producing ELF binaries as if targeting Linux.      
+      # ==> So the comment is clarifying: you're spoofing the build script's shell-syntax detection to POSIX (via OS=), while explicitly telling LuaJIT to still target-compile for Windows PE (via TARGET_SYS=Windows) — those two settings aren't the same thing, and only the first one is being overridden away from Windows.
       BUILD_COMMAND     ${MAKE_PROGRAM} -C "${LUAJIT_SRC_DIR}"
                         OS= HOST_CC=gcc TARGET_CC=gcc
                         TARGET_SYS=Windows BUILDMODE=static
