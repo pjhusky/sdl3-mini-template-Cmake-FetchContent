@@ -190,8 +190,14 @@ elseif(WIN32)
   ExternalProject_Add(luajit_compile
       SOURCE_DIR        "${LUAJIT_SRC_DIR}"
       CONFIGURE_COMMAND ""
+      # OS= overrides Windows_NT from the environment so LuaJIT's Makefile uses
+      # its POSIX branch (bash-compatible "if test -f") instead of the Windows
+      # branch ("if exist ...") which cmd.exe syntax bash cannot parse.
+      # TARGET_SYS=Windows tells LuaJIT the binary target is still Windows PE.
+      # BUILDMODE=static produces libluajit.a (no DLL).
       BUILD_COMMAND     ${MAKE_PROGRAM} -C "${LUAJIT_SRC_DIR}"
-                        HOST_CC=gcc TARGET_CC=gcc
+                        OS= HOST_CC=gcc TARGET_CC=gcc
+                        TARGET_SYS=Windows BUILDMODE=static
       INSTALL_COMMAND   ""
       BUILD_BYPRODUCTS  "${LUAJIT_STATIC_LIB}"
                         "${LUAJIT_SRC_DIR}/src/luajit.h"
